@@ -1,7 +1,274 @@
 <!doctype html>
-<meta charset="utf-8">
-<title>¡Felicidades!</title>
-<style>
-  html,body{height:100%;margin:0;display:grid;place-items:center;font:700 2rem sans-serif}
-</style>
-¡Andonegi matamoros!
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Sistema comprometido…</title>
+  <meta name="theme-color" content="#0f0" />
+  <style>
+    :root{
+      --bg:#020304;
+      --grid:#0a0c10;
+      --neon:#00ff88;
+      --neon2:#17f3a6;
+      --danger:#ff3b3b;
+      --amber:#ffcc00;
+      --text:#c8f7dc;
+      --muted:#8aa39b;
+      --scan:#0fff8a14;
+    }
+    html,body{height:100%;margin:0}
+    body{
+      background:
+        radial-gradient(1200px 600px at 50% 10%, #06140d 0%, #020304 60%),
+        repeating-linear-gradient(0deg,var(--grid) 0 2px,transparent 2px 4px),
+        var(--bg);
+      color:var(--text); font:500 16px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      overflow:hidden;
+    }
+
+    /* Matrix rain canvas al fondo */
+    #matrix{position:fixed; inset:0; z-index:0; opacity:.25}
+
+    /* Scanlines y flicker */
+    .scanlines::after{
+      content:"";
+      position:fixed; inset:0; z-index:2;
+      background:linear-gradient(to bottom, transparent 50%, rgba(255,255,255,.02) 51%, transparent 52%);
+      background-size:100% 3px; mix-blend-mode:overlay; pointer-events:none;
+    }
+    .flicker{ animation:flicker 6s linear infinite }
+    @keyframes flicker{
+      0%,100%{opacity:1}
+      5%{opacity:.98}
+      6%{opacity:.85}
+      7%{opacity:1}
+      8%{opacity:.94}
+      9%{opacity:1}
+    }
+
+    /* Contenedor terminal */
+    .wrap{position:relative; z-index:3; height:100%; display:grid; place-items:center; padding:20px}
+    .terminal{
+      width:min(960px,92vw); height:min(62vh,520px);
+      background:#020a06cc; backdrop-filter: blur(3px);
+      border:1px solid #0b2; border-radius:14px;
+      box-shadow: 0 0 0 2px #083, 0 0 30px #00ff8855 inset, 0 20px 80px #000;
+      display:flex; flex-direction:column; overflow:hidden;
+    }
+    .titlebar{
+      display:flex; align-items:center; gap:10px; padding:10px 14px;
+      background:linear-gradient(180deg,#071e14,#03130c);
+      border-bottom:1px solid #0b2;
+    }
+    .dot{width:10px;height:10px;border-radius:50%}
+    .dot.red{background:#ff5f56}
+    .dot.yellow{background:#ffbd2e}
+    .dot.green{background:#27c93f}
+    .title{margin-left:6px; color:#9be7c1; font-weight:700; letter-spacing:.08em}
+    .screen{flex:1; padding:14px 16px 10px 16px; overflow:auto; scrollbar-width:thin}
+    .line{white-space:pre-wrap}
+    .muted{color:var(--muted)}
+    .amber{color:var(--amber)}
+    .danger{color:var(--danger)}
+    .cursor{display:inline-block; width:.65ch; background:var(--neon); margin-left:2px; animation:blink 1s steps(2,end) infinite}
+    @keyframes blink{ 50%{background:transparent} }
+
+    /* Barras de progreso */
+    .bar{height:10px; background:#053; border:1px solid #0a5; border-radius:10px; overflow:hidden; margin:6px 0 12px 0}
+    .bar>i{display:block; height:100%; width:0; background:linear-gradient(90deg,var(--neon),var(--neon2)); box-shadow:0 0 20px var(--neon); transition:width .25s}
+
+    /* Glitch */
+    .glitch{
+      position:fixed; inset:0; display:grid; place-items:center; z-index:4;
+      pointer-events:none; opacity:0; transform:scale(.98);
+      animation:enter .7s ease forwards;
+      animation-delay: 6.6s; /* se revela tras la secuencia */
+    }
+    @keyframes enter{to{opacity:1; transform:scale(1)}}
+    .glitch h1{
+      font-size: clamp(28px, 8vw, 84px);
+      color: #fff; text-shadow:0 0 16px #f33, 0 0 32px #f33;
+      letter-spacing:.08em; margin:0;
+      position:relative;
+      animation:glow 2.4s ease-in-out infinite alternate;
+    }
+    @keyframes glow{
+      from{ text-shadow:0 0 16px #f33, 0 0 32px #f33 }
+      to{ text-shadow:0 0 24px #ff5b5b, 0 0 64px #ff5b5b }
+    }
+    .glitch h1::before, .glitch h1::after{
+      content:attr(data-text); position:absolute; inset:0; mix-blend-mode:screen;
+    }
+    .glitch h1::before{ color:#09f; transform:translate(2px,-2px); clip-path:inset(0 0 50% 0) }
+    .glitch h1::after{ color:#0f0; transform:translate(-2px,2px); clip-path:inset(50% 0 0 0) }
+
+    /* Tarjeta “es broma” */
+    .prank{
+      position:fixed; z-index:5; inset:auto 20px 20px auto;
+      max-width:min(520px,90vw); background:#020a0677; border:1px solid #2a5;
+      border-radius:14px; padding:14px 16px; color:#cceedd; backdrop-filter: blur(4px);
+      box-shadow:0 10px 40px #000a; transform:translateY(20px); opacity:0; pointer-events:none;
+      transition:.6s; 
+      animation:reveal 1s ease forwards; animation-delay:8s;
+    }
+    @keyframes reveal { to{ transform:translateY(0); opacity:1; pointer-events:auto } }
+    .prank b{color:#fff}
+    .btn{
+      display:inline-block; margin-top:10px; padding:10px 14px; border-radius:12px;
+      color:#031; font-weight:800; text-decoration:none; background:linear-gradient(90deg,var(--neon),var(--neon2));
+      box-shadow:0 0 20px #00ff8855; border:0; cursor:pointer
+    }
+    .btn.outline{
+      background:transparent; color:#9be7c1; border:1px solid #2a5; box-shadow:none
+    }
+
+    /* Botón de salida rápida */
+    .panic{
+      position:fixed; top:12px; right:12px; z-index:6;
+      background:#101b15cc; color:#bfffdc; border:1px solid #2a5; border-radius:10px; padding:6px 10px;
+      cursor:pointer; font-weight:700;
+    }
+
+    /* Pie con aviso */
+    .foot{
+      position:fixed; bottom:6px; left:50%; transform:translateX(-50%); z-index:3;
+      color:#6fa98f; font-size:12px; opacity:.65
+    }
+  </style>
+</head>
+<body class="scanlines flicker">
+  <canvas id="matrix" aria-hidden="true"></canvas>
+
+  <button class="panic" id="panicBtn" title="Salir de la broma">Es broma</button>
+
+  <div class="wrap">
+    <div class="terminal" role="region" aria-label="Consola de diagnóstico">
+      <div class="titlebar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="title">/var/log/seguridad — sesión root</span>
+      </div>
+      <div class="screen" id="screen" tabindex="0" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <div class="glitch" id="glitch" aria-hidden="true">
+    <h1 data-text="HAS SIDO HACKEADO">HAS SIDO HACKEADO</h1>
+  </div>
+
+  <aside class="prank" id="prank">
+    <div style="font-weight:800;letter-spacing:.05em;margin-bottom:6px">✋ Tranquilidad: <b>ES UNA BROMA</b></div>
+    <div class="muted">No se ha recogido ningún dato, ni se ha ejecutado nada real. Este QR solo
+      muestra una animación para vacilar a amigos 😄.</div>
+    <a class="btn" href="https://albizujon.github.io/felicidades/" rel="noopener">Volver a la página</a>
+    <button class="btn outline" id="reset">Repetir efecto</button>
+  </aside>
+
+  <div class="foot">Demo lúdica · 100% inofensiva · GitHub Pages</div>
+
+  <script>
+    // ===== Matrix rain (ligero) =====
+    (function matrix(){
+      const c = document.getElementById('matrix');
+      const ctx = c.getContext('2d');
+      function resize(){ c.width = innerWidth; c.height = innerHeight; }
+      addEventListener('resize', resize, {passive:true}); resize();
+      const fontSize = 16;
+      let columns = Math.floor(c.width / fontSize);
+      let drops = Array(columns).fill(0).map(()=>Math.random()*c.height);
+
+      const chars = 'アイウエオ0123456789abcdefABCDEF$#*@+=-';
+      function draw(){
+        ctx.fillStyle='rgba(0,0,0,0.08)'; ctx.fillRect(0,0,c.width,c.height);
+        ctx.fillStyle='#12ff9b'; ctx.font=fontSize+'px monospace';
+        for(let i=0;i<drops.length;i++){
+          const text = chars.charAt(Math.random()*chars.length|0);
+          ctx.fillText(text, i*fontSize, drops[i]*fontSize);
+          if(drops[i]*fontSize>c.height && Math.random()>0.975) drops[i]=0;
+          drops[i]+=Math.random()>0.95?2:1;
+        }
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
+
+    // ===== Utilidades de terminal =====
+    const screen = document.getElementById('screen');
+    const glitch = document.getElementById('glitch');
+    const prank  = document.getElementById('prank');
+    const panic  = document.getElementById('panicBtn');
+    const resetBtn = document.getElementById('reset');
+
+    const wait = (ms)=>new Promise(r=>setTimeout(r,ms));
+    const rnd = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+    const ip =()=> [rnd(10,250),rnd(0,255),rnd(0,255),rnd(1,254)].join('.');
+    const hash = (len=32)=>Array(len).fill(0).map(_=>'0123456789abcdef'[rnd(0,15)]).join('');
+
+    function printLine(html, cls){
+      const line = document.createElement('div');
+      line.className = 'line'+(cls?(' '+cls):'');
+      line.innerHTML = html;
+      screen.appendChild(line);
+      screen.scrollTop = screen.scrollHeight;
+      return line;
+    }
+    async function type(text, cls){
+      const el = printLine('', cls);
+      let i=0, buffer='';
+      const cur = document.createElement('span'); cur.className='cursor';
+      el.append(cur);
+      for(const ch of text){
+        buffer += ch;
+        el.firstChild ? el.firstChild.nodeValue = buffer : el.insertBefore(document.createTextNode(buffer), cur);
+        await wait(rnd(10,30));
+      }
+      cur.remove();
+    }
+
+    // ===== Secuencia principal =====
+    async function run(){
+      screen.innerHTML = '';
+      glitch.style.display = 'none'; prank.style.opacity=0; prank.style.pointerEvents='none';
+
+      await type(`[+] Iniciando auditoría de seguridad — nodo ${ip()}`);
+      await type(`[+] Escalando privilegios... OK`);
+      await type(`[+] Abriendo túnel cifrado a ${ip()}:${rnd(1000,9999)} ... OK`);
+      await type(`[+] Enum. usuarios ↪ 4 encontrados  (root, admin, svc-backup, guest)`);
+      await type(`[+] Descifrando tokens de sesión...`, 'amber');
+
+      // barra de progreso
+      const bar = document.createElement('div'); bar.className='bar';
+      const fill = document.createElement('i'); bar.append(fill); screen.append(bar);
+
+      for(let p=0;p<=100;p+= rnd(3,9)){
+        fill.style.width = p+'%';
+        await wait(rnd(50,120));
+      }
+
+      await type(`[!] Anomalía detectada: checksum ${hash(12)} ≠ ${hash(12)}`, 'danger');
+      await type(`[!] Volcando memoria del proceso pid ${rnd(1200,5400)} ...`);
+      await wait(300);
+      for(let i=0;i<6;i++) printLine(`0x${hash(8)}  ${hash(32)}  ${hash(32)}`, 'muted');
+
+      await type(`[+] Compilando payload anti-forense... OK`);
+      await type(`[+] Exfiltración → ${ip()}  | id=${hash(6)}  | size=${rnd(42,512)}KB`);
+      await wait(400);
+
+      // Preparar revelación
+      glitch.style.display = 'grid';
+      // después de ~2s aparece la tarjeta "es broma" por CSS (animation-delay)
+    }
+
+    // Botón “Es broma” para revelar al instante
+    panic.addEventListener('click', ()=>{
+      glitch.style.display='grid';
+      prank.style.opacity=1; prank.style.pointerEvents='auto';
+    });
+    resetBtn.addEventListener('click', run);
+
+    // Lanzar
+    run();
+  </script>
+</body>
+</html>
